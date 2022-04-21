@@ -43,9 +43,13 @@ func checkFeed(feedUrl string, db *diskv.Diskv) {
 	lastUpdated := db.ReadString(feedId)
 
 	if lastUpdated == "" || lastUpdated != feed.Updated {
-		item := feed.Items[0]
-		log.Println(feed.Updated + ": " + item.Title)
-		pingSlack(feed.Title, item.Title, item.Link)
+		if len(feed.Items) > 0 {
+			item := feed.Items[0]
+			log.Println(feed.Updated + ": " + item.Title)
+			pingSlack(feed.Title, item.Title, item.Link)
+		} else {
+			log.Println("Nothing in feed")
+		}
 
 		err := db.Write(feedId, []byte(feed.Updated))
 		if err != nil {
