@@ -1,17 +1,39 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/url"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/ashwanthkumar/slack-go-webhook"
 	"github.com/mmcdole/gofeed"
 	"github.com/peterbourgon/diskv/v3"
 )
 
 var feedParser = gofeed.NewParser()
+
+func pingSlack(title string, message string, link string) {
+	webhookUrl := os.Getenv("SLACK_WEBHOOK_URL")
+
+	attachment := slack.Attachment{}
+	attachment.AddAction(slack.Action{Type: "button", Text: "Link", Url: link, Style: "primary"})
+
+	messageText := fmt.Sprintf("*%s*: %s", title, message)
+	payload := slack.Payload{
+		Text:        messageText,
+		Username:    "morss",
+		IconEmoji:   ":radio:",
+		Attachments: []slack.Attachment{attachment},
+	}
+	err := slack.Send(webhookUrl, "", payload)
+	if len(err) > 0 {
+		log.Fatal(err)
+		os.Exit(1)
+	}
+}
 
 func checkFeed(feedUrl string, db *diskv.Diskv) {
 	feed, _ := feedParser.ParseURL(feedUrl)
@@ -21,7 +43,9 @@ func checkFeed(feedUrl string, db *diskv.Diskv) {
 	lastUpdated := db.ReadString(feedId)
 
 	if lastUpdated == "" || lastUpdated != feed.Updated {
-		log.Println(feed.Updated + ": " + feed.Items[0].Title)
+		item := feed.Items[0]
+		log.Println(feed.Updated + ": " + item.Title)
+		pingSlack(feed.Title, item.Title, item.Link)
 
 		err := db.Write(feedId, []byte(feed.Updated))
 		if err != nil {

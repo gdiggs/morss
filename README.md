@@ -8,6 +8,7 @@ Morss requires a few environment variables for configuration:
 
 - `FEED_URLS`: a comma-separated list of feeds to poll
 - `DATASTORE`: a path on disk for data persistence
+- `SLACK_WEBHOOK_URL`: a URL for a [Slack Webhook](https://api.slack.com/messaging/webhooks)
 
 With those set, you can run
 
