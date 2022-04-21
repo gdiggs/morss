@@ -41,17 +41,21 @@ func checkFeed(feedUrl string, db *diskv.Diskv) {
 	feedId := url.QueryEscape(feedUrl)
 
 	lastUpdated := db.ReadString(feedId)
+	feedUpdate := feed.Updated
+	if len(feed.Items) > 0 {
+		feedUpdate = feed.Items[0].Published
+	}
 
-	if lastUpdated == "" || lastUpdated != feed.Updated {
+	if lastUpdated == "" || lastUpdated != feedUpdate {
 		if len(feed.Items) > 0 {
 			item := feed.Items[0]
-			log.Println(feed.Updated + ": " + item.Title)
+			log.Println(feedUpdate + ": " + item.Title)
 			pingSlack(feed.Title, item.Title, item.Link)
 		} else {
 			log.Println("Nothing in feed")
 		}
 
-		err := db.Write(feedId, []byte(feed.Updated))
+		err := db.Write(feedId, []byte(feedUpdate))
 		if err != nil {
 			log.Fatal(err)
 			os.Exit(1)
